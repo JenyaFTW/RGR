@@ -140,12 +140,32 @@ func StartClient(wg *sync.WaitGroup) {
 	}
 	logger.Println("Established encrypted connection")
 
-	// Send encrypted file to server
+	// Read file to be sent over
 	testFile, err := ioutil.ReadFile("test.txt")
 	if err != nil {
 		logger.Println(err)
 		return
 	}
-	testMsg := utils.EncryptAES(testFile, sessionKey)
-	conn.Write(testMsg)
+
+	// Break file into chunks
+	var chunks [][]byte
+	chunkSize := 128
+	for i := 0; i < len(testFile); i += chunkSize {
+		end := i + chunkSize
+
+		if end > len(testFile) {
+			end = len(testFile)
+		}
+
+		chunks = append(chunks, testFile[i:end])
+	}
+
+	// Go through each chunk
+	prevHash := make([]byte, 64)
+	for i := 0; i < len(chunks); i++ {
+		h := make([]byte, 64)
+		d := NewShake256()
+		d.Write(prevHash)
+		logger.Println(string(h))
+	}
 }
